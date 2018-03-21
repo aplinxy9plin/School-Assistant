@@ -10,25 +10,14 @@ const url = require('url')
 var cheerio = require('cheerio'),
     cheerioTableparser = require('cheerio-tableparser');
 
+var moment = require('moment')
+var now = moment().format("DD.MM.YY")
+
 // Keep a global reference of the window object, if you don't, the window will
 // be closed automatically when the JavaScript object is garbage collected.
 let mainWindow
 
 function createWindow () {
-  // Create the browser window.
-/*  mainWindow = new BrowserWindow({width: 800, height: 600})
-
-  let NetSchoolURL = 'http://78.140.18.5'
-
-  mainWindow.loadURL(NetSchoolURL)
-
-  mainWindow.webContents.on('dom-ready', function(e) {
-    nowURL = mainWindow.webContents.getURL()
-    console.log(nowURL);
-    //mainWindow.webContents.executeJavaScript("document.getElementById('user[login]').value = 'testpick'")
-  })
-*/
-
   // Good
   mainWindow = new BrowserWindow({
     webPreferences: {
@@ -72,16 +61,33 @@ function createWindow () {
         cheerioTableparser($);
 
         var data = $("table").parsetable(true, true, true);
-        for (var i = 1; i < data[1].length; i++) {
-          if(data[1][i] !== data[2][i] &&  data[3][i] !== data[4][i]){
-            console.log(data[1][i]); // предмет
-            console.log(data[2][i]); // тип задания
-            console.log(data[3][i]); // задание
-            console.log(data[4][i]); // отметка
-          }else{
-            console.log('\n'+data[1][i]); // предмет
+
+        function allWork(data){
+          for (var i = 1; i < data[1].length; i++) {
+            if(data[1][i] !== data[2][i] &&  data[3][i] !== data[4][i]){
+              console.log(data[1][i]); // предмет
+              console.log(data[2][i]); // тип задания
+              console.log(data[3][i]); // задание
+              console.log(data[4][i]); // отметка
+            }else{
+              console.log('\n'+data[1][i]); // предмет
+            }
           }
         }
+
+        function todayWork(data){
+          for (var i = 1; i < data[1].length; i++) {
+            if(data[1][i].indexOf(now) >= 0){
+              console.log(now);
+              i++
+              while(data[1][i] !== data[2][i] &&  data[3][i] !== data[4][i]){
+                console.log(data[1][i] + data[2][i] + data[3][i] + data[4][i] + '\n');
+                i++
+              }
+            }
+          }
+        }
+        todayWork(data)
       })
       //table table-bordered table-thin table-xs print-block
     }
