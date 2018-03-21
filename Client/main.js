@@ -7,6 +7,9 @@ const BrowserWindow = electron.BrowserWindow
 const path = require('path')
 const url = require('url')
 
+var cheerio = require('cheerio'),
+    cheerioTableparser = require('cheerio-tableparser');
+
 // Keep a global reference of the window object, if you don't, the window will
 // be closed automatically when the JavaScript object is garbage collected.
 let mainWindow
@@ -52,12 +55,35 @@ function createWindow () {
         mainWindow.webContents.executeJavaScript("document.getElementsByClassName('button-login')[0].click();")
       }
     }
-    if(nowURL == 'http://78.140.18.5/asp/Curriculum/Assignments.asp'){
-      console.log('auth success');
-    }
     if(nowURL == 'http://78.140.18.5/asp/SecurityWarning.asp'){
       console.log('auth success, but SecurityWarning');
       mainWindow.webContents.executeJavaScript("doContinue()")
+    }
+    if(nowURL == 'http://78.140.18.5/asp/Curriculum/Assignments.asp'){
+      console.log('auth success');
+      getTable = `
+        //for (var i = 0; i < 15; i++) {
+          //document.getElementsByTagName('tr')[0]
+        //}`
+      mainWindow.webContents.executeJavaScript(`document.getElementsByTagName('table')[0].innerHTML`, function (result) {
+        result = '<table>' + result + '</table>'
+        const $ = cheerio.load(result)
+
+        cheerioTableparser($);
+
+        var data = $("table").parsetable(true, true, true);
+        for (var i = 1; i < data[1].length; i++) {
+          if(data[1][i] !== data[2][i] &&  data[3][i] !== data[4][i]){
+            console.log(data[1][i]); // предмет
+            console.log(data[2][i]); // тип задания
+            console.log(data[3][i]); // задание
+            console.log(data[4][i]); // отметка
+          }else{
+            console.log('\n'+data[1][i]); // предмет
+          }
+        }
+      })
+      //table table-bordered table-thin table-xs print-block
     }
   })
 
