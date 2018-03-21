@@ -13,13 +13,55 @@ let mainWindow
 
 function createWindow () {
   // Create the browser window.
-  mainWindow = new BrowserWindow({width: 800, height: 600})
-  
-  mainWindow.loadURL('https://github.com')
-  
+/*  mainWindow = new BrowserWindow({width: 800, height: 600})
+
+  let NetSchoolURL = 'http://78.140.18.5'
+
+  mainWindow.loadURL(NetSchoolURL)
+
   mainWindow.webContents.on('dom-ready', function(e) {
-    mainWindow.webContents.executeJavaScript("document.getElementById('user[login]').value = 'testpick'")
+    nowURL = mainWindow.webContents.getURL()
+    console.log(nowURL);
+    //mainWindow.webContents.executeJavaScript("document.getElementById('user[login]').value = 'testpick'")
   })
+*/
+
+  // Good
+  mainWindow = new BrowserWindow({
+    webPreferences: {
+      width: 800,
+      height: 600,
+      nodeIntegration: false
+    }
+  })
+
+  let NetSchoolURL = 'http://78.140.18.5/'
+
+  mainWindow.loadURL(NetSchoolURL)
+
+  mainWindow.webContents.on('dom-ready', function(e) {
+    nowURL = mainWindow.webContents.getURL()
+    console.log(nowURL);
+    auth = `document.getElementsByName('UN')[0].value = 'Аплин';
+            document.getElementsByName('PW')[0].value = '222222';`
+    if(nowURL == NetSchoolURL){
+      mainWindow.webContents.executeJavaScript(auth, () => {
+        setTimeout(buttonLogin, 1000);
+      })
+      function buttonLogin(){
+        mainWindow.webContents.executeJavaScript("document.getElementsByClassName('button-login')[0].click();")
+      }
+    }
+    if(nowURL == 'http://78.140.18.5/asp/Curriculum/Assignments.asp'){
+      console.log('auth success');
+    }
+    if(nowURL == 'http://78.140.18.5/asp/SecurityWarning.asp'){
+      console.log('auth success, but SecurityWarning');
+      mainWindow.webContents.executeJavaScript("doContinue()")
+    }
+  })
+
+  //mainWindow.webContents.
 
   // and load the index.html of the app.
   /*mainWindow.loadURL(url.format({
@@ -29,7 +71,7 @@ function createWindow () {
   }))*/
 
   // Open the DevTools.
-  // mainWindow.webContents.openDevTools()
+  mainWindow.webContents.openDevTools()
 
   // Emitted when the window is closed.
   mainWindow.on('closed', function () {
