@@ -28,14 +28,15 @@ function createWindow () {
   })
 
   let NetSchoolURL = 'http://78.140.18.5/'
-
+  let login = ''
+  let password = ''
   mainWindow.loadURL(NetSchoolURL)
 
   mainWindow.webContents.on('dom-ready', function(e) {
     nowURL = mainWindow.webContents.getURL()
     console.log(nowURL);
-    auth = `document.getElementsByName('UN')[0].value = 'Аплин';
-            document.getElementsByName('PW')[0].value = '222222';`
+    auth = `document.getElementsByName('UN')[0].value = '`+login+`';
+            document.getElementsByName('PW')[0].value = '`+password+`';`
     if(nowURL == NetSchoolURL){
       mainWindow.webContents.executeJavaScript(auth, () => {
         setTimeout(buttonLogin, 1000);
