@@ -12,7 +12,9 @@ server.get('/', (req,res) => {
 })
 
 server.get('/update', (req,res) => {
-  createWindow()
+  var login = req.query.login
+  var password = req.query.password
+  createWindow(login, password)
   res.send('updated')
 })
 
@@ -33,7 +35,8 @@ var now = moment().format("DD.MM.YY")
 // be closed automatically when the JavaScript object is garbage collected.
 let mainWindow
 
-function createWindow () {
+function createWindow (login, password) {
+
   // Good
   mainWindow = new BrowserWindow({
     webPreferences: {
@@ -44,8 +47,10 @@ function createWindow () {
   })
 
   let NetSchoolURL = 'http://78.140.18.5/'
-  let login = 'Аплин'
-  let password = '222222'
+
+  var checkPass = false
+  //let login = 'Аплин'
+  //let password = '222222'
   mainWindow.loadURL(NetSchoolURL)
 
   mainWindow.webContents.on('dom-ready', function(e) {
@@ -59,7 +64,21 @@ function createWindow () {
       })
       function buttonLogin(){
         mainWindow.webContents.executeJavaScript("document.getElementsByClassName('button-login')[0].click();")
+        setTimeout(errorCheck, 1000);
       }
+      function errorCheck(){
+        mainWindow.webContents.executeJavaScript("document.getElementsByClassName('modal-dialog').length;", function(result){
+          if(result == '1'){
+            // Send BAD PASSWORD ERROR
+            console.log('Bad Password for '+login);
+            mainWindow.close()
+          }
+        })
+      }
+      checkPass = true
+    }
+    if(checkPass == false && nowURL == NetSchoolURL){
+      console.log('Bad Password');
     }
     if(nowURL == 'http://78.140.18.5/asp/SecurityWarning.asp'){
       console.log('auth success, but SecurityWarning');
@@ -133,7 +152,9 @@ function createWindow () {
 // This method will be called when Electron has finished
 // initialization and is ready to create browser windows.
 // Some APIs can only be used after this event occurs.
-app.on('ready', createWindow)
+app.on('ready', () => {
+  createWindow('Аплин','222222')
+})
 
 // Quit when all windows are closed.
 app.on('window-all-closed', function () {
@@ -148,7 +169,7 @@ app.on('activate', function () {
   // On OS X it's common to re-create a window in the app when the
   // dock icon is clicked and there are no other windows open.
   if (mainWindow === null) {
-    createWindow()
+    createWindow('Аплин','222222')
   }
 })
 
