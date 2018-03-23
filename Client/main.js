@@ -4,6 +4,22 @@ const app = electron.app
 // Module to create native browser window.
 const BrowserWindow = electron.BrowserWindow
 
+var express = require('express')
+var server = express()
+
+server.get('/', (req,res) => {
+  res.send('html')
+})
+
+server.get('/update', (req,res) => {
+  createWindow()
+  res.send('updated')
+})
+
+server.listen(1337, function(){
+  console.log('App server is running');
+})
+
 const path = require('path')
 const url = require('url')
 
@@ -28,8 +44,8 @@ function createWindow () {
   })
 
   let NetSchoolURL = 'http://78.140.18.5/'
-  let login = ''
-  let password = ''
+  let login = 'Аплин'
+  let password = '222222'
   mainWindow.loadURL(NetSchoolURL)
 
   mainWindow.webContents.on('dom-ready', function(e) {
@@ -62,7 +78,7 @@ function createWindow () {
         cheerioTableparser($);
 
         var data = $("table").parsetable(true, true, true);
-
+        todayWork(data, now)
         function allWork(data){
           for (var i = 1; i < data[1].length; i++) {
             if(data[1][i] !== data[2][i] &&  data[3][i] !== data[4][i]){
@@ -76,7 +92,7 @@ function createWindow () {
           }
         }
 
-        function todayWork(data){
+        function todayWork(data, now){
           for (var i = 1; i < data[1].length; i++) {
             if(data[1][i].indexOf(now) >= 0){
               console.log(now);
@@ -88,7 +104,6 @@ function createWindow () {
             }
           }
         }
-        todayWork(data)
       })
       //table table-bordered table-thin table-xs print-block
     }
