@@ -7,6 +7,134 @@ const BrowserWindow = electron.BrowserWindow
 var express = require('express')
 var server = express()
 
+var mysql = require('mysql');
+
+var con = mysql.createConnection({
+  host: "localhost",
+  user: "top4ek",
+  password: "q2w3e4r5",
+  database: "school_assistant"
+});
+
+con.connect(function(err) {
+  if (err) throw err;
+  con.query("SELECT * FROM users", function (err, result, fields) {
+    if (err) throw err;
+    console.log('Database connection is success');
+  });
+});
+
+const Telegraf = require('telegraf')
+const { Extra, Markup } = require('telegraf')
+
+const telegram = new Telegraf('572029181:AAEsGGbVdpl0DsJRJHYL_r8SV1RmZMSch6w')
+
+telegram.startPolling()
+
+telegram.command('start', ({from,reply}) => {
+  con.query("INSERT INTO coffee (chat_id, status) VALUES ("+from.id+", 'choose_service'") function(err, result){
+    reply('Привет, выбери свой дневник', Markup
+      .keyboard(['NetSchool', 'Sd.tom.ru'])
+      .resize()
+      .extra()
+    )
+  })
+})
+
+telegram.on('message', (ctx) => {
+  var chat_id = ctx.from.id
+  var message = ctx.message.text
+  con.query("SELECT status, service, login, password FROM users WHERE chat_id = "+chat_id+"", function(err, result){
+    if(result[0] !== undefined){
+      var status = result[0].status
+      switch (status) {
+        case 'choose_service':
+          if(message == 'NetSchool'){
+            con.query("UPDATE users SET service = 'NetSchool', status = 'service_accept' WHERE chat_id = "+chat_id+"", function(err, res){
+              ctx.reply('Вы выбрали NetSchool. Все верно?', Markup
+                .keyboard(['Да', 'Нет'])
+                .resize()
+                .extra()
+              )
+            })
+          }else if (message == 'Sd.tom.ru') {
+            con.query("UPDATE users SET service = 'NetSchool', status = 'service_accept' WHERE chat_id = "+chat_id+"", function(err, res){
+              ctx.reply('Вы выбрали sd.tom.ru. Все верно?', Markup
+                .keyboard(['Да', 'Нет'])
+                .resize()
+                .extra()
+              )
+            })
+          }else{
+            ctx.reply('Привет, выбери свой дневник', Markup
+              .keyboard(['NetSchool', 'Sd.tom.ru'])
+              .resize()
+              .extra()
+            )
+          }
+          break;
+        case 'service_accept':
+          if(message == 'Да'){
+            updateStatus(chat_id, 'get_login')
+            ctx.reply("Отлично, теперь напиши свой логин для доступа к журналу.")
+          }else if (message == 'Нет') {
+            con.query("UPDATE users SET status = 'choose_service' WHERE chat_id = '"+chat_id+"'", function(err, res){
+              ctx.reply('Привет, выбери свой дневник', Markup
+                .keyboard(['NetSchool', 'Sd.tom.ru'])
+                .resize()
+                .extra()
+              )
+            })
+          }else{
+            ctx.reply('Вы выбрали '+result[0].service+'. Все верно?', Markup
+              .keyboard(['Да', 'Нет'])
+              .resize()
+              .extra()
+            )
+          }
+          break;
+        case 'get_login':
+          con.query("UPDATE users SET login = "+message+", status = 'login_check' WHERE chat_id = "+chat_id+"", function(err, res){
+            ctx.reply('Ваш логин - '+message+'?', Markup
+              .keyboard(['Да', 'Нет'])
+              .resize()
+              .extra()
+            )
+          })
+          break;
+        case 'login_check':
+          if (message == 'Да') {
+            //con.query("UPDATE users SET login = "+message+"")
+          }else if (message == 'Нет') {
+            updateStatus(chat_id, 'get_login')
+            ctx.reply("Напиши свой логин для доступа к журналу.")
+          }else{
+            ctx.reply('Ваш логин - '+result[0].login+'?', Markup
+              .keyboard(['Да', 'Нет'])
+              .resize()
+              .extra()
+            )
+          }
+          break;
+        default:
+
+      }
+    }else{
+      con.query("INSERT INTO coffee (chat_id, status) VALUES ("+chat_id+", 'choose_service'") function(err, result){
+        reply('Привет, выбери свой дневник', Markup
+          .keyboard(['NetSchool', 'Sd.tom.ru'])
+          .resize()
+          .extra()
+        )
+      })
+    }
+  })
+})
+
+function updateStatus(chat_id, status){
+  con.query("UPDATE users SET status = '"+status+"' WHERE chat_id = "+chat_id+"")
+}
+
 server.get('/', (req,res) => {
   res.send('html')
 })
@@ -97,7 +225,11 @@ function createWindow (login, password) {
         cheerioTableparser($);
 
         var data = $("table").parsetable(true, true, true);
-        todayWork(data, now)
+
+        //todayWork(data, now)
+
+        allWork(data)
+
         function allWork(data){
           for (var i = 1; i < data[1].length; i++) {
             if(data[1][i] !== data[2][i] &&  data[3][i] !== data[4][i]){
@@ -127,16 +259,6 @@ function createWindow (login, password) {
       //table table-bordered table-thin table-xs print-block
     }
   })
-
-  //mainWindow.webContents.
-
-  // and load the index.html of the app.
-  /*mainWindow.loadURL(url.format({
-    pathname: path.join(__dirname, 'index.html'),
-    protocol: 'file:',
-    slashes: true
-  }))*/
-
   // Open the DevTools.
   mainWindow.webContents.openDevTools()
 

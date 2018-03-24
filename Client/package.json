@@ -24,6 +24,8 @@
     "cheerio-tableparser": "^1.0.1",
     "express": "^4.16.3",
     "moment": "^2.21.0",
-    "npm": "^5.7.1"
+    "mysql": "^2.15.0",
+    "npm": "^5.7.1",
+    "telegraf": "^3.20.0"
   }
 }
