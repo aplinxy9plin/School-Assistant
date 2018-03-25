@@ -130,7 +130,18 @@ telegram.on('message', (ctx) => {
           if (message == 'Да') {
             ctx.reply('Отлично, я записал твой пароль. Сейчас я залогинюсь!')
             // login in system
-            createWindow(result[0].login, result[0].password, (auth_result) => {
+            createWindow(result[0].login, result[0].password, (auth_result, work) => {
+              if (auth_result == 'success') {
+                // today work :)
+                ctx.reply('Замечательно, ты авторизовался! :)\nНа сегодня тебе задали: ')
+              }else{
+                ctx.reply('Логин или пароль неверный! Попробуй заново! Выбери свой дневник', Markup
+                  .keyboard(['NetSchool', 'Sd.tom.ru'])
+                  .resize()
+                  .extra()
+                )
+                updateStatus(chat_id, 'choose_service')
+              }
               console.log('Результат: ' + auth_result);
             })
           }else if (message == 'Нет') {
@@ -227,6 +238,7 @@ function createWindow (login, password, callback) {
           if(result == '1'){
             // Send BAD PASSWORD ERROR
             console.log('Bad Password for '+login);
+            callback('bad')
             mainWindow.close()
           }
         })
@@ -242,7 +254,6 @@ function createWindow (login, password, callback) {
     }
     if(nowURL == 'http://78.140.18.5/asp/Curriculum/Assignments.asp'){
       console.log('auth success');
-      callback('success')
       getTable = `
         //for (var i = 0; i < 15; i++) {
           //document.getElementsByTagName('tr')[0]
@@ -258,7 +269,7 @@ function createWindow (login, password, callback) {
         //todayWork(data, now)
 
         allWork(data)
-
+        callback('success')
         function allWork(data){
           for (var i = 1; i < data[1].length; i++) {
             if(data[1][i] !== data[2][i] &&  data[3][i] !== data[4][i]){
