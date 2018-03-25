@@ -32,7 +32,7 @@ const telegram = new Telegraf('572029181:AAEsGGbVdpl0DsJRJHYL_r8SV1RmZMSch6w')
 telegram.startPolling()
 
 telegram.command('start', ({from,reply}) => {
-  con.query("INSERT INTO coffee (chat_id, status) VALUES ("+from.id+", 'choose_service'") function(err, result){
+  con.query("INSERT INTO users (chat_id, status) VALUES ("+from.id+", 'choose_service')", function(err, result){
     reply('Привет, выбери свой дневник', Markup
       .keyboard(['NetSchool', 'Sd.tom.ru'])
       .resize()
@@ -94,7 +94,7 @@ telegram.on('message', (ctx) => {
           }
           break;
         case 'get_login':
-          con.query("UPDATE users SET login = "+message+", status = 'login_check' WHERE chat_id = "+chat_id+"", function(err, res){
+          con.query("UPDATE users SET login = '"+message+"', status = 'login_check' WHERE chat_id = "+chat_id+"", function(err, res){
             ctx.reply('Ваш логин - '+message+'?', Markup
               .keyboard(['Да', 'Нет'])
               .resize()
@@ -104,7 +104,8 @@ telegram.on('message', (ctx) => {
           break;
         case 'login_check':
           if (message == 'Да') {
-            //con.query("UPDATE users SET login = "+message+"")
+            ctx.reply('Отлично, я записал твой логин, напиши свой пароль?')
+            updateStatus(chat_id, 'get_password')
           }else if (message == 'Нет') {
             updateStatus(chat_id, 'get_login')
             ctx.reply("Напиши свой логин для доступа к журналу.")
@@ -116,12 +117,39 @@ telegram.on('message', (ctx) => {
             )
           }
           break;
+        case 'get_password':
+          con.query("UPDATE users SET password = '"+message+"', status = 'password_check' WHERE chat_id = '"+chat_id+"'", function(err, res){
+            ctx.reply('Ваш пароль - '+message+'?', Markup
+              .keyboard(['Да', 'Нет'])
+              .resize()
+              .extra()
+            )
+          })
+          break;
+        case 'password_check':
+          if (message == 'Да') {
+            ctx.reply('Отлично, я записал твой пароль. Сейчас я залогинюсь!')
+            // login in system
+            createWindow(result[0].login, result[0].password, (auth_result) => {
+              console.log('Результат: ' + auth_result);
+            })
+          }else if (message == 'Нет') {
+            updateStatus(chat_id, 'get_password')
+            ctx.reply("Напиши свой пароль для доступа к журналу.")
+          }else{
+            ctx.reply('Ваш пароль - '+result[0].password+'?', Markup
+              .keyboard(['Да', 'Нет'])
+              .resize()
+              .extra()
+            )
+          }
+          break;
         default:
 
       }
     }else{
-      con.query("INSERT INTO coffee (chat_id, status) VALUES ("+chat_id+", 'choose_service'") function(err, result){
-        reply('Привет, выбери свой дневник', Markup
+      con.query("INSERT INTO users (chat_id, status) VALUES ("+chat_id+", 'choose_service')", function(err, result){
+        ctx.reply('Привет, выбери свой дневник', Markup
           .keyboard(['NetSchool', 'Sd.tom.ru'])
           .resize()
           .extra()
@@ -163,7 +191,7 @@ var now = moment().format("DD.MM.YY")
 // be closed automatically when the JavaScript object is garbage collected.
 let mainWindow
 
-function createWindow (login, password) {
+function createWindow (login, password, callback) {
 
   // Good
   mainWindow = new BrowserWindow({
@@ -214,6 +242,7 @@ function createWindow (login, password) {
     }
     if(nowURL == 'http://78.140.18.5/asp/Curriculum/Assignments.asp'){
       console.log('auth success');
+      callback('success')
       getTable = `
         //for (var i = 0; i < 15; i++) {
           //document.getElementsByTagName('tr')[0]
@@ -275,7 +304,9 @@ function createWindow (login, password) {
 // initialization and is ready to create browser windows.
 // Some APIs can only be used after this event occurs.
 app.on('ready', () => {
-  createWindow('Аплин','222222')
+  createWindow('Аплин','222222', function(){
+    console.log('Window is created');
+  })
 })
 
 // Quit when all windows are closed.
