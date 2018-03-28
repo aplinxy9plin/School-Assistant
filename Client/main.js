@@ -130,10 +130,18 @@ telegram.on('message', (ctx) => {
           if (message == 'Да') {
             ctx.reply('Отлично, я записал твой пароль. Сейчас я залогинюсь!')
             // login in system
-            createWindow(result[0].login, result[0].password, (auth_result, work) => {
+            createWindow(result[0].login, result[0].password, (auth_result) => {
               if (auth_result == 'success') {
                 // today work :)
-                ctx.reply('Замечательно, ты авторизовался! :)\nНа сегодня тебе задали: ')
+                ctx.reply('Замечательно, ты авторизовался! :)', Extra
+                  .HTML()
+                  .markup((m) => m.inlineKeyboard([
+                    m.callbackButton('ДЗ на сегодня', 'today_work'),
+                    m.callbackButton('Средний балл', 'mark'),
+                    m.callbackButton('Репетиторы', 'teachers'),
+                    m.callbackButton('Разработчик', 'developer')
+                  ], {columns: 2})))
+                updateStatus(chat_id, 'work')
               }else{
                 ctx.reply('Логин или пароль неверный! Попробуй заново! Выбери свой дневник', Markup
                   .keyboard(['NetSchool', 'Sd.tom.ru'])
@@ -154,6 +162,17 @@ telegram.on('message', (ctx) => {
               .extra()
             )
           }
+          break;
+        case 'work':
+          ctx.reply('Замечательно, ты авторизовался! :)', Extra
+            .HTML()
+            .markup((m) => m.inlineKeyboard([
+              m.callbackButton('ДЗ на сегодня', 'today_work'),
+              m.callbackButton('Средний балл', 'mark'),
+              m.callbackButton('Репетиторы', 'teachers'),
+              m.callbackButton('Разработчик', 'developer')
+            ], {columns: 2})))
+          console.log('Вы авторизованы!');
           break;
         default:
 
@@ -268,9 +287,11 @@ function createWindow (login, password, callback) {
 
         //todayWork(data, now)
 
-        allWork(data)
+        allWork(data, function(){
+          callback('fucking shit')
+        })
         callback('success')
-        function allWork(data){
+        function allWork(data, callback){
           for (var i = 1; i < data[1].length; i++) {
             if(data[1][i] !== data[2][i] &&  data[3][i] !== data[4][i]){
               console.log(data[1][i]); // предмет
@@ -281,6 +302,7 @@ function createWindow (login, password, callback) {
               console.log('\n'+data[1][i]); // предмет
             }
           }
+          callback()
         }
 
         function todayWork(data, now){
